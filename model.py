@@ -42,18 +42,33 @@ class Movie(db.Model):
     imdb_url = db.Column(db.String(500), nullable=True)
 
 
+    def __repr__(self):
+        """Provide helpful representation when printed."""
+
+        return "<Movie movie_id=%s title=%s>" % (self.movie_id,
+                                               self.title)
+
+
 class Rating(db.Model):
     """Rating of ratings website """
 
     __tablename__ = "ratings"
 
     rating_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    movie_id = db.Column(db.Integer, nullable=True)
-    user_id = db.Column(db.Integer, nullable=True)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movies.movie_id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
     score = db.Column(db.Integer, nullable=True)
 
+    #Define relationship to movie
+    movie = db.relationship("Movie", backref=db.backref("ratings", order_by=rating_id))
+    user = db.relationship("User", backref=db.backref("ratings", order_by=rating_id))
 
+    def __repr__(self):
+        """Provide helpful representation when printed."""
 
+        s = "<Rating rating_id=%s movie_id=%s user_id=%s score=%s>"
+        return s % (self.rating_id, self.movie_id, self.user_id,
+                    self.score)
 
 ##############################################################################
 # Helper functions
