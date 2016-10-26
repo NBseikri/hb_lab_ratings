@@ -57,12 +57,50 @@ def movie_list():
 def show_movie(movie_id):
 
     movie = Movie.query.get(movie_id)
+    user_rating = Rating.query.filter_by(user_id=945, movie_id=movie_id).first()
 
-    # To create exclusive access to user profile without displaying id in browser 
-    # user = User.query.get(session['user_id'])
+    print "OUR USER RATING IS: ", user_rating
+    # if 'user_id' in session:
+    #     user_rating = ratings.filter('user_id' == )
+    #     print "OUR USER RATING OBJECT:", user_rating
+    # else:
+    #     user_rating = None
 
 
-    return render_template('movie.html', movie=movie)
+    return render_template('movie.html', movie=movie, user_rating=user_rating)
+
+
+@app.route('/add_rating')
+def add_or_update_rating():
+
+    user_id = session['user_id']
+    movie_id = request.form.get('movie_id')
+    score = request.form.get('rating')
+
+
+    db_rating = db.session.query(Rating).filter_by(user_id=user_id, movie_id=movie_id)
+    rating_exists = db_rating.first()
+
+    if rating_exists:
+        # We need to add to the session or it won't ever be stored
+        db_rating.update({'score': score})
+        # Once we're done, we should commit our work
+        db.session.commit()
+        flash("Your rating has been updated to " + score + ".")
+    else:
+        rating = Rating(user_id=user_id,
+                    movie_id=movie_id,
+                    score=score)
+        db.session.add(rating)
+        flash("Your rating for " + rating.movie.title + "has been added.")
+    
+    return redirect('/movie/{}'.format(movie.movie_id))
+
+
+
+
+
+
 
 
 @app.route("/register", methods=['GET'])
@@ -145,10 +183,7 @@ if __name__ == "__main__":
     app.debug = True
 
     connect_to_db(app)
-
     # Use the DebugToolbar
     DebugToolbarExtension(app)
-
-
     
     app.run(port=5000)

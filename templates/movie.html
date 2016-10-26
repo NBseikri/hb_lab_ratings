@@ -6,6 +6,30 @@
 <p>Release Date: {{ movie.released_at.month }}-{{ movie.released_at.day }}-{{ movie.released_at.year }}</p>
 <a href="{{ movie.imdb_url }}"> See IMDB page.</a>
 
+{% if 'user_id' in session %}
+    {% if user_rating != None %}
+        <p> Your rating is {{ user_rating.score }}</p>
+        <p> Update your rating below: </p>
+
+    {% else %}
+
+        <p>You havent rated this movie yet.</p>
+        <h2>Add a Rating: </h2>
+
+    {% endif %}
+
+    <form action='/add_rating' method='POST'>
+        <input type='hidden' name='movie_id' value='{{movie.movie_id}}'>
+        <select name='rating'>
+            {% for i in range(5) %}
+                <option value={{ i+1 }}> {{ i + 1 }}</option> 
+            {% endfor %}
+        </select>
+
+    </form>
+
+{% endif %}
+
 <h2>Movie Ratings</h2>
 
 {% for rating in movie.ratings %}

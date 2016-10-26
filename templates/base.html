@@ -12,8 +12,11 @@
     {% endwith %}
 
   <a href="/">Ratings</a><br>
-  {% if session['user_id'] != None %}
+
+  {% if 'user_id' in session %}
+    {% if session['user_id'] %}
     <a href="/logout">Logout</a>
+    {% endif %}
   {% endif %}
 
   <hr>
