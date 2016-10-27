@@ -6,7 +6,7 @@
 <p>Release Date: {{ movie.released_at.month }}-{{ movie.released_at.day }}-{{ movie.released_at.year }}</p>
 <a href="{{ movie.imdb_url }}"> See IMDB page.</a>
 
-{% if 'user_id' in session %}
+{% if 'user_id' in session and session['user_id'] != None %}
     {% if user_rating != None %}
         <p> Your rating is {{ user_rating.score }}</p>
         <p> Update your rating below: </p>
@@ -22,10 +22,10 @@
         <input type='hidden' name='movie_id' value='{{movie.movie_id}}'>
         <select name='rating'>
             {% for i in range(5) %}
-                <option value={{ i+1 }}> {{ i + 1 }}</option> 
+                <option value={{ i + 1 }}> {{ i + 1 }}</option> 
             {% endfor %}
         </select>
-
+        <input type='submit'>
     </form>
 
 {% endif %}
@@ -33,7 +33,9 @@
 <h2>Movie Ratings</h2>
 
 {% for rating in movie.ratings %}
-    <p>Rating Title: {{ rating.movie.title }}</p>
+    
+<!--     Resolve why not able to access user attributes thru relationship (i.e. rating.user.user_id) -->
+    <p>User ID: {{ rating.user_id }}</p>
     <p>Score: {{ rating.score }} </p>
 {% endfor %}
 

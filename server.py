@@ -6,6 +6,7 @@ from flask import Flask, jsonify, render_template, redirect, request, flash, ses
 from flask_debugtoolbar import DebugToolbarExtension
 
 from model import connect_to_db, db, User, Rating, Movie
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 
 app = Flask(__name__)
@@ -35,12 +36,12 @@ def user_list():
 
 @app.route('/user/<user_id>')
 def show_user_profile(user_id):
+    """Showing the user profile """
 
     user = User.query.get(user_id)
 
     # To create exclusive access to user profile without displaying id in browser 
     # user = User.query.get(session['user_id'])
-
 
     return render_template('user.html', user=user)
 
@@ -55,36 +56,40 @@ def movie_list():
 
 @app.route('/movie/<movie_id>')
 def show_movie(movie_id):
+    """Shows movie details page """
 
     movie = Movie.query.get(movie_id)
     user_rating = Rating.query.filter_by(user_id=945, movie_id=movie_id).first()
 
-    print "OUR USER RATING IS: ", user_rating
-    # if 'user_id' in session:
-    #     user_rating = ratings.filter('user_id' == )
-    #     print "OUR USER RATING OBJECT:", user_rating
-    # else:
-    #     user_rating = None
-
-
     return render_template('movie.html', movie=movie, user_rating=user_rating)
 
 
-@app.route('/add_rating')
+@app.route('/add_rating', methods=['POST'])
 def add_or_update_rating():
+    """Add or update the users rating."""
 
-    user_id = session['user_id']
+    user_id = session.get('user_id')
     movie_id = request.form.get('movie_id')
+    movie = Movie.query.get(movie_id)
     score = request.form.get('rating')
 
 
     db_rating = db.session.query(Rating).filter_by(user_id=user_id, movie_id=movie_id)
-    rating_exists = db_rating.first()
+
+    try: 
+        rating_exists = db_rating.one()
+    except NoResultFound:
+
+        print "No instance of rating found in db for this user."        
+        rating_exists = None 
+
+    except MultipleResultsFound:
+        print "Multiple rating instances found in db for this user."
+        rating_exists = db_rating.first()
+
 
     if rating_exists:
-        # We need to add to the session or it won't ever be stored
         db_rating.update({'score': score})
-        # Once we're done, we should commit our work
         db.session.commit()
         flash("Your rating has been updated to " + score + ".")
     else:
@@ -92,26 +97,23 @@ def add_or_update_rating():
                     movie_id=movie_id,
                     score=score)
         db.session.add(rating)
+        db.session.commit()
         flash("Your rating for " + rating.movie.title + "has been added.")
     
-    return redirect('/movie/{}'.format(movie.movie_id))
-
-
-
-
-
+    return redirect('/movie/{}'.format(movie_id))
 
 
 
 @app.route("/register", methods=['GET'])
 def get_registration_form():
-
+    """Displays registration form"""
 
     return render_template("register_form.html")
 
 
 @app.route("/register", methods=['POST'])
 def registration_process():
+
 
     email = request.form.get('email')
     password = request.form.get('password')
@@ -130,9 +132,7 @@ def registration_process():
                     zipcode=zipcode,
                     )
 
-        # We need to add to the session or it won't ever be stored
         db.session.add(user)
-        # Once we're done, we should commit our work
         db.session.commit()
 
         return redirect('/')
@@ -149,7 +149,15 @@ def login_process():
     email = request.form.get('email')
     password = request.form.get('password')
 
-    user = db.session.query(User).filter_by(email=email).first()
+    user_query = db.session.query(User).filter_by(email=email)
+    try:
+        user = user_query.one()
+    except NoResultFound:
+        print "No user instance found for this email in db."
+        user = None
+    except MultipleResultsFound:
+        print "Multiple user instances found for this email in db."
+        user = user_query.first()
 
     if user:
         if user.password == password:
@@ -187,3 +195,4 @@ if __name__ == "__main__":
     DebugToolbarExtension(app)
     
     app.run(port=5000)
+
