@@ -14,6 +14,7 @@
     {% else %}
 
         <p>You havent rated this movie yet.</p>
+        <p> We think you'll rate this movie as {{ predicted_score }}</p>
         <h2>Add a Rating: </h2>
 
     {% endif %}
@@ -33,9 +34,7 @@
 <h2>Movie Ratings</h2>
 
 {% for rating in movie.ratings %}
-    
-<!--     Resolve why not able to access user attributes thru relationship (i.e. rating.user.user_id) -->
-    <p>User ID: {{ rating.user_id }}</p>
+    <p>User ID: {{ rating.user.user_id }}</p>
     <p>Score: {{ rating.score }} </p>
 {% endfor %}
 

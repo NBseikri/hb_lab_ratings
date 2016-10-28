@@ -7,6 +7,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 
 from model import connect_to_db, db, User, Rating, Movie
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+import similarities
 
 
 app = Flask(__name__)
@@ -61,7 +62,15 @@ def show_movie(movie_id):
     movie = Movie.query.get(movie_id)
     user_rating = Rating.query.filter_by(user_id=945, movie_id=movie_id).first()
 
-    return render_template('movie.html', movie=movie, user_rating=user_rating)
+    if user_rating == None:
+        score_corr = similarities.make_score_corr_dictionary(movie.title, movie_id)
+        max_pearson_score, max_similarity_user_id = similarities.calculate_max_pearson_score(score_corr)
+        print max_pearson_score
+
+        predicted_score = similarities.calculate_prediction(max_pearson_score, max_similarity_user_id, movie_id)
+        print predicted_score
+
+    return render_template('movie.html', movie=movie, user_rating=user_rating, predicted_score=predicted_score)
 
 
 @app.route('/add_rating', methods=['POST'])
@@ -134,6 +143,7 @@ def registration_process():
 
         db.session.add(user)
         db.session.commit()
+        session['user_id'] = user.user_id
 
         return redirect('/')
 
